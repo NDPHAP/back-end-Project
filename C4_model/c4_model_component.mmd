@@ -1,0 +1,65 @@
+C4Component
+title C4 model - Component
+
+System_Boundary(sys, "System") {
+
+  Container_Boundary(be, "Backend") {
+    Component(auth, "Auth Service", "JWT/OIDC, RBAC, 2FA, Rate limits", "Đăng nhập, phân quyền Admin")
+    Component(catalog, "Product Catalog Service", "CRUD, SEO slugs, media metadata", "Quản lý danh mục & sản phẩm")
+    Component(searchsvc, "Search Service", "Facets, sort, autocomplete", "Wrapper cho Elastic/Algolia")
+    Component(pricing, "Pricing & Promotions", "Discounts, coupons, tax rules", "Giá & khuyến mãi")
+    Component(cart, "Cart & Checkout", "Session/anon carts, totals, merge", "Giỏ hàng & tính tiền")
+    Component(order, "Order Management", "State machine, returns/refunds", "Đơn hàng & hoàn trả")
+    Component(inventory, "Inventory Service", "Quantity on hand, reservations", "Tồn kho & đặt giữ")
+    Component(payment, "Payment Integration", "Create intent, callbacks, reconciliation", "Thanh toán")
+    Component(shipping, "Shipping", "Carrier rates, labels, tracking", "Vận chuyển")
+    Component(notify, "Notification Service", "Email/SMS templates, event subscribers", "Thông báo")
+    Component(user, "Profile", "Accounts, addresses, consents", "Hồ sơ người dùng")
+    Component(report, "Reporting & Admin Ops", "Sales, audits, inventory health", "Báo cáo/kiểm toán")
+  }
+ 
+  ComponentDb(db, "Relational DB", "PostgreSQL/MySQL", "Users, Orders, Products, Prices")
+}
+
+Boundary(ext, "External Systems", "boundary") {
+  System_Ext(paygw, "Payment Gateway", "3-D Secure, Webhooks")
+  System_Ext(ship3pl, "Logistics / 3PL", "Rates, Labels, Tracking")
+  System_Ext(emailsms, "Email/SMS Provider", "Transactional messages, OTP")
+
+  System_Ext(cache, "Redis Cache", "Sessions, carts, tokens")
+  System_Ext(searchIndex, "Search Index", "Elasticsearch/Algolia", "Full-text, facets, autocomplete")
+  System_Ext(mq, "Message Queue", "Kafka/RabbitMQ", "Async events & jobs")
+}
+
+%% Relationships
+Rel(auth, cart, "Authorize, throttle")
+Rel(catalog, searchsvc, "Index/query abstraction")
+Rel(catalog, searchIndex, "Push product index / reindex")
+Rel(catalog, mq, "Publish product events")
+Rel(cart, pricing, "Get price/discounts")
+Rel(cart, inventory, "Reserve/check stock")
+Rel(cart, payment, "Create payment intent")
+Rel(cart, order, "Create/confirm order")
+Rel(order, notify, "Emit order events")
+Rel(order, shipping, "Create shipment / labels")
+Rel(inventory, order, "Update allocations")
+Rel(payment, paygw, "Capture/Refund", "HTTPS")
+Rel(shipping, ship3pl, "Rates/Labels/Tracking", "HTTPS")
+Rel(notify, emailsms, "Send Email/SMS", "HTTPS")
+Rel(user, cart, "User cart link/merge")
+
+Rel(catalog, db, "CRUD")
+Rel(pricing, db, "Read/Write")
+Rel(cart, db, "Persist carts/checkout")
+Rel(order, db, "Persist orders")
+Rel(inventory, db, "Stock levels, reservations")
+Rel(user, db, "Profiles, addresses")
+Rel(report, db, "Analytics/queries")
+
+Rel(auth, cache, "Sessions/tokens")
+Rel(cart, cache, "Session/anon carts")
+
+Rel(searchsvc, searchIndex, "Query facets/suggest")
+Rel(order, mq, "Publish order events")
+
+UpdateLayoutConfig($c4BoundaryInRow="2", $c4ShapeInRow="4")
