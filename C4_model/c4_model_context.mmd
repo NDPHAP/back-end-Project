@@ -1,0 +1,39 @@
+C4Context
+title System Context - E-Commerce Website
+
+%% Users
+Enterprise_Boundary(bUsers, "Users") {
+  Person(customer, "Customer", "Browse & search<br/>Add to cart, checkout<br/>Track orders")
+  Person(admin, "Admin", "Manage catalog & orders<br/>Inventory & Reporting")
+}
+
+%% System
+Enterprise_Boundary(bSystem, "E-Commerce Website (System)") {
+  System(app, "E-Commerce Website", "Web + Admin + Public API")
+}
+
+%% External Systems
+Enterprise_Boundary(bExternal, "External Systems") {
+  System_Ext(cdn, "CDN / Edge", "Static assets, WAF, TLS")
+  System_Ext(pg, "Payment Gateway", "Card/Wallet, 3-D Secure, Webhooks")
+  System_Ext(ns, "Email/SMS Provider", "Confirmations, OTP/2FA")
+}
+
+%% Relationships
+Rel(customer, cdn, "HTTPS (Web/Mobile)")
+Rel(admin, cdn, "HTTPS (Admin Portal)")
+Rel(cdn, app, "Forward requests")
+
+Rel(app, pg, "Create payment intent<br/>Handle webhooks")
+Rel(app, ns, "Order updates<br/>Marketing (opt-in)")
+
+%% Centered labels with distinct colors
+UpdateRelStyle(customer, cdn, $textColor="blue",  $lineColor="blue",  $position="middle")
+UpdateRelStyle(admin,    cdn, $textColor="green", $lineColor="green", $position="middle")
+UpdateRelStyle(cdn,      app, $textColor="black", $lineColor="black", $position="middle")
+UpdateRelStyle(app, pg,  $textColor="purple", $lineColor="purple", $position="middle")
+UpdateRelStyle(app, lz,  $textColor="orange", $lineColor="orange", $position="middle")
+UpdateRelStyle(app, ns,  $textColor="red",    $lineColor="red",    $position="middle")
+
+%% Global layout:
+UpdateLayoutConfig($c4BoundaryInRow="2", $c4ShapeInRow="1")

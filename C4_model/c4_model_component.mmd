@@ -1,0 +1,60 @@
+C4Component
+title C4 model - Component
+
+System_Boundary(sys, "System") {
+
+  Container_Boundary(be, "Backend") {
+    Component(auth, "Auth Service", "JWT/OIDC, RBAC, 2FA, Rate limits", "Đăng nhập, phân quyền Admin")
+
+    %% Catalog là domain/query layer
+    Component(catalog, "Product Catalog Service", "CRUD, SEO slugs, media metadata; Filtering (facets/sort/pagination)", "Quản lý danh mục & sản phẩm")
+
+    %% Filtering API 
+    Component(catalog_filter, "Catalog - Filtering API", "HTTP endpoints: filter/sort/paginate; validate params; build query spec", "API lọc sản phẩm cho trang danh sách")
+
+    Component(top10, "Top Products Service", "Read-mostly aggregates, caching", "Top 10 bán chạy (homepage)")
+    Component(cart, "Cart & Checkout", "Session/anon carts, totals, merge", "Giỏ hàng & tính tiền")
+    Component(order, "Order Management", "State machine, returns/refunds", "Đơn hàng & hoàn trả")
+    Component(payment, "Payment Integration", "Create intent, callbacks, reconciliation", "Thanh toán")
+    Component(shipping, "Shipping", "Carrier rates, labels, tracking", "Vận chuyển")
+    Component(notify, "Notification Service", "Email/SMS templates, event subscribers", "Thông báo")
+    Component(user, "Profile", "Accounts, addresses, consents", "Hồ sơ người dùng")
+  }
+
+  ComponentDb(db, "Relational DB", "PostgreSQL/MySQL", "Users, Orders, Products, OrderItems, Aggregates")
+}
+
+Boundary(ext, "External Systems", "boundary") {
+  System_Ext(paygw, "Payment Gateway", "3-D Secure, Webhooks")
+  System_Ext(emailsms, "Email/SMS Provider", "Transactional messages, OTP")
+  System_Ext(cache, "Redis Cache", "Sessions, carts, tokens, hot lists")
+}
+
+%% Relationships
+Rel(auth, cart, "Authorize, throttle")
+Rel(cart, payment, "Create payment intent")
+Rel(cart, order, "Create/confirm order")
+Rel(order, notify, "Emit order events")
+Rel(order, shipping, "Create shipment / labels")
+Rel(payment, paygw, "Capture/Refund", "HTTPS")
+Rel(notify, emailsms, "Send Email/SMS", "HTTPS")
+Rel(user, cart, "User cart link/merge")
+
+%% Catalog <-> DB
+Rel(catalog, db, "CRUD & filtered reads")
+
+%% Filtering API gọi Catalog (không truy cập DB trực tiếp)
+Rel(catalog_filter, catalog, "Build query spec, call domain/query layer")
+
+Rel(cart, db, "Persist carts/checkout")
+Rel(order, db, "Persist orders & order items")
+Rel(user, db, "Profiles, addresses")
+
+Rel(top10, db, "Read aggregates from order_items")
+Rel(top10, cache, "Cache top list (TTL 5–15m)")
+Rel(catalog, top10, "Enrich with product media/price")
+
+Rel(auth, cache, "Sessions/tokens")
+Rel(cart, cache, "Session/anon carts")
+
+UpdateLayoutConfig($c4BoundaryInRow="2", $c4ShapeInRow="4")

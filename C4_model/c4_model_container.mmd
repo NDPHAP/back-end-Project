@@ -1,0 +1,48 @@
+C4Container
+title Container
+
+Person(customer, "Customer", "Browser / Mobile")
+Person(admin, "Admin User")
+
+System_Boundary(sys, "System") {
+  Container_Boundary(frontend, "Frontend") {
+    Container(store, "Website", "SPA / SSR", "Product list, Cart, Checkout UI")
+    Container(adminPortal, "Admin Portal", "SPA", "CRUD products, orders, reports")
+  }
+
+  Container(apiGw, "API Gateway / BFF", "Gateway", "Auth, RBAC, Rate limit, API composition")
+
+  Container_Boundary(backend, "Backend") {
+    Container(be, "Backend API", "Stateless services", "Profiel, Product, Order, Cart, Inventory, Payment")
+  }
+
+  Container_Boundary(storage, "Storage") {
+    ContainerDb(db, "Relational DB", "PostgreSQL/MySQL", "Users, Orders, Products, Prices")
+  }
+}
+
+Boundary(ext, "External Systems", "boundary") {
+  System_Ext(cdn, "CDN / Edge", "Static assets, WAF, TLS")
+
+  System_Ext(pay, "Payment Gateway", "3-D Secure, Webhooks")
+  System_Ext(notify, "Email/SMS Provider", "Confirmations, OTP/2FA")
+}
+
+%% Relationships
+Rel(customer, cdn, "HTTPS")
+Rel(admin, cdn, "HTTPS")
+Rel(cdn, store, "Serve static assets")
+Rel(cdn, adminPortal, "Serve static assets")
+
+Rel(store, apiGw, "HTTPS")
+Rel(adminPortal, apiGw, "HTTPS")
+Rel(apiGw, be, "Route / compose requests")
+
+%%Backend API <-> Storage
+Rel(be, db, "SQL/PostgreSQL")
+
+%%Backend API -> external 3rd-party
+Rel(be, pay, "Create payment intent; handle webhooks")
+Rel(be, notify, "Order updates; marketing (opt-in)")
+
+UpdateLayoutConfig($c4BoundaryInRow="3", $c4ShapeInRow="3")
