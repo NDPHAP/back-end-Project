@@ -8,13 +8,12 @@ System_Boundary(sys, "System") {
   Container_Boundary(frontend, "Frontend") {
     Container(store, "Website", "SPA / SSR", "Product list, Cart, Checkout UI")
     Container(adminPortal, "Admin Portal", "SPA", "CRUD products, orders, reports")
-    Container(mobileApp, "Mobile App", "iOS / Android", "Same API as Web; Push notifications")
   }
 
   Container(apiGw, "API Gateway / BFF", "Gateway", "Auth, RBAC, Rate limit, API composition")
 
   Container_Boundary(backend, "Backend") {
-    Container(be, "Backend API", "Stateless services", "Product, Order, Cart, Inventory, Payment")
+    Container(be, "Backend API", "Stateless services", "Profiel, Product, Order, Cart, Inventory, Payment")
   }
 
   Container_Boundary(storage, "Storage") {
@@ -24,11 +23,8 @@ System_Boundary(sys, "System") {
 
 Boundary(ext, "External Systems", "boundary") {
   System_Ext(cdn, "CDN / Edge", "Static assets, WAF, TLS")
-  System_Ext(search, "Search Index", "Elasticsearch/Algolia — Full-text, facets, autocomplete")
-  System_Ext(mq, "Message Queue", "Kafka/RabbitMQ ")
 
   System_Ext(pay, "Payment Gateway", "3-D Secure, Webhooks")
-  System_Ext(ship, "Logistics / 3PL", "Rates, Labels, Tracking")
   System_Ext(notify, "Email/SMS Provider", "Confirmations, OTP/2FA")
 }
 
@@ -37,23 +33,16 @@ Rel(customer, cdn, "HTTPS")
 Rel(admin, cdn, "HTTPS")
 Rel(cdn, store, "Serve static assets")
 Rel(cdn, adminPortal, "Serve static assets")
-Rel(customer, mobileApp, "Uses")
 
 Rel(store, apiGw, "HTTPS")
 Rel(adminPortal, apiGw, "HTTPS")
-Rel(mobileApp, apiGw, "HTTPS")
 Rel(apiGw, be, "Route / compose requests")
 
 %%Backend API <-> Storage
 Rel(be, db, "SQL/PostgreSQL")
 
-%%Backend API -> external infra
-Rel(be, search, "Index / Query")
-Rel(be, mq, "Publish / Consume")
-
 %%Backend API -> external 3rd-party
 Rel(be, pay, "Create payment intent; handle webhooks")
-Rel(be, ship, "Create shipment; labels & tracking")
 Rel(be, notify, "Order updates; marketing (opt-in)")
 
 UpdateLayoutConfig($c4BoundaryInRow="3", $c4ShapeInRow="3")
